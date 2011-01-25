@@ -5,7 +5,9 @@ import urllib.request, urllib.parse, urllib.error
 import xml.etree.ElementTree as etree
 from email.mime.text import MIMEText
 import smtplib
-#import sys, socket
+import sys, socket
+import datetime
+
     
 myEvent = {}
 def reset_myEvent() :
@@ -37,12 +39,13 @@ def reset_myEvent() :
             'email' : '' ,
             'yearly' : '' ,
             'picture_url' : '' ,
+            'fk_category' : '' ,
             }
 
 
 def getinfos( ) :
     page    = urllib.request.urlopen( url )
-    content = page.read( )#.decode( 'WINDOWS-1252' ).replace( '\r\n' , '' ).replace( '\n' , '' ).replace( '\t' , '' ) # .encode( 'UTF-8' )
+    content = page.read( )#.decode( 'WINDOWS-1252' )#.replace( '\r\n' , '' ).replace( '\n' , '' ).replace( '\t' , '' ) # .encode( 'UTF-8' )
     tree = etree.fromstring( content )  
     for child in tree:
         #print( str( child.tag  ) + ' = ' +  str ( child.attrib ) )
@@ -55,7 +58,8 @@ def getinfos( ) :
                         for key in myEvent :
                             if 'ID' in c.attrib and c.attrib[ 'ID' ] == key.upper():
                                 for attrib in c:
-                                    if attrib.tag == 'VALUE' :
+                                    if attrib.tag == 'VALUE' and  attrib.text  is not 'None' :
+                                        #print( attrib.text.__doc__ )
                                         myEvent[ key ] = str( attrib.text ).replace( 'None' ,  '' )
                     found = 0
                     if len( myE ) > 0 :
@@ -68,65 +72,118 @@ def getinfos( ) :
 
 # reading the xml files
 myE  = {}
-urls  = ( 'http://vk.stnet.ch/XmlEventList.jsp?lang=de&maxrows=50000&cat=A&dateinterval=7000&rlevel=nat&fields=all' ,
-         'http://vk.stnet.ch/XmlEventList.jsp?lang=de&maxrows=50000&cat=B&dateinterval=7000&rlevel=nat&fields=all' ,
-         'http://vk.stnet.ch/XmlEventList.jsp?lang=de&maxrows=50000&cat=C&dateinterval=7000&rlevel=nat&fields=all' ,
-         'http://vk.stnet.ch/XmlEventList.jsp?lang=de&maxrows=50000&cat=D&dateinterval=7000&rlevel=nat&fields=all' ,
-         'http://vk.stnet.ch/XmlEventList.jsp?lang=de&maxrows=50000&cat=E&dateinterval=7000&rlevel=nat&fields=all' ,
-         'http://vk.stnet.ch/XmlEventList.jsp?lang=de&maxrows=50000&cat=F&dateinterval=7000&rlevel=nat&fields=all' ,
-         'http://vk.stnet.ch/XmlEventList.jsp?lang=de&maxrows=50000&cat=G&dateinterval=7000&rlevel=nat&fields=all' ,
+urls  = ( 'http://vk.stnet.ch/XmlEventList.jsp?lang=fr&maxrows=50000&cat=A&dateinterval=14&rlevel=nat&fields=all' ,
+         'http://vk.stnet.ch/XmlEventList.jsp?lang=fr&maxrows=50000&cat=B&dateinterval=14&rlevel=nat&fields=all' ,
+         'http://vk.stnet.ch/XmlEventList.jsp?lang=fr&maxrows=50000&cat=C&dateinterval=14&rlevel=nat&fields=all' ,
+         'http://vk.stnet.ch/XmlEventList.jsp?lang=fr&maxrows=50000&cat=D&dateinterval=14&rlevel=nat&fields=all' ,
+         'http://vk.stnet.ch/XmlEventList.jsp?lang=fr&maxrows=50000&cat=E&dateinterval=14&rlevel=nat&fields=all' ,
+         'http://vk.stnet.ch/XmlEventList.jsp?lang=fr&maxrows=50000&cat=F&dateinterval=14&rlevel=nat&fields=all' ,
+         'http://vk.stnet.ch/XmlEventList.jsp?lang=fr&maxrows=50000&cat=G&dateinterval=14&rlevel=nat&fields=all' ,
+         'http://vk.stnet.ch/XmlEventList.jsp?lang=fr&maxrows=50000&cat=H&dateinterval=14&rlevel=nat&fields=all' ,
+         'http://vk.stnet.ch/XmlEventList.jsp?lang=fr&maxrows=50000&cat=I&dateinterval=14&rlevel=nat&fields=all' ,
+         'http://vk.stnet.ch/XmlEventList.jsp?lang=fr&maxrows=50000&cat=J&dateinterval=14&rlevel=nat&fields=all' ,
+         'http://vk.stnet.ch/XmlEventList.jsp?lang=fr&maxrows=50000&cat=K&dateinterval=14&rlevel=nat&fields=all' ,
+         'http://vk.stnet.ch/XmlEventList.jsp?lang=fr&maxrows=50000&cat=O&dateinterval=14&rlevel=nat&fields=all' ,
         )
-#for url in urls :
-#    getinfos( )
+for url in urls :
+    getinfos( )
 
 # sending the mails : one email for every events
 # install this program on windows http://www.softstack.com/freesmtp.html
-#print ( myE )
-#for event in myE :
+user             = ''
+password         = ''
 text             = ''
 text            += '<html>\n<head>\n<title>New event</title>\n</head>\n<body>\n'
-text            += '</body>\n'
-msg              = MIMEText( text, 'plain', 'WINDOWS-1252')
-msg['Subject']   = 'Test depuis la machine 127.0.0.1 ...'
-msg['From']      = "admin@ca-dev.com"
-msg['Reply-to']  = "admin@ca-dev.com"
-msg['To']        = "admin@ca-dev.com"
-#print( msg )
-s                = smtplib.SMTP()
-#s.helo()
-s.connect( "ca-dev.com"  )
-s.ehlo( "ca-dev.com" )
-#s.login( "user" , "pass" )
+text            += 'Email de validation des events depuis myswitzerland.com<br/>\n'
+for num in myE:
+    event        = myE[ num ]
+    eid          = 'myswitzerland.com.'
+    text        += "<form method='post' action='http://www.suisseevents.ch/inject.php'>\n"
+    text        += "<table border='1' style='width: 100%'>\n"
+    text        += "<tr>\n"
+    text        += "<td> "
+    if 'event_id' in event:
+        text    += event[ 'event_id' ]
+        eid     += event[ 'event_id' ]
+    text    += "<input type='hidden' name='event_id' value='" + eid + "' />"
+    text        += "</td>"
+    text        += "<td> "
+    if 'title_fr' in event and len ( event[ 'title_fr' ] ) > 1 :
+        text    += event[ 'title_fr' ] 
+    text        += "</td>"
+    text        += "<td> "
+    if 'title_de' in event and len ( event[ 'title_de' ] ) > 1 :
+        text    += event[ 'title_de' ]
+    text        += "</td>"
+    text        += "<td> "
+    if 'title_it' in event and len ( event[ 'title_it' ] ) > 1 :
+        text    += event[ 'title_it' ]
+    text        += "</td>"
+    text        += "<td> "
+    if 'title_en' in event and len ( event[ 'title_en' ] ) > 1 :
+        text    += event[ 'title_en' ]
+    text        += "</td>"
+    text        += "</tr>\n"
 
-#s.sendmail( "<admin@ca-dev.com>" , "<admin@ca-dev.com>" , "subject: hello from 127.0.0.1\r\n\r\ntest depuis python\r\n\r\n.\r\n" )
+    for key in event:
+        if key != 'event_id' and key != 'fk_category' :
+            text += "<tr>\n"
+            text += "<td>\n"
+            text += str( key ) + ' : '
+            text += "</td>\n"
+            text += "<td colspan='4'>\n"
+            text += "<textarea name='" + eid + '_' + key + "' style='width: 100%' >"
+            text += event[ key ]
+            text += "</textarea>"
+            text += "</td>\n"
+            text += "</tr>\n"
+
+    if 'fk_category' in event :
+            text += "<tr>\n"
+            text += "<td>\n"
+            text += "Categories  : "
+            text += "</td>\n"
+            text += "<td colspan='4'>\n"
+            text += "<select name='" + eid + '_' + key + "' style='width: 100%' >"
+            cats  = { 'A' : 'Concert - Discotheque - Festival - Jazz - World Music' ,
+                     'B' : 'Spectacles - Theatres - Opera - Comedies ' ,
+                     'C' : 'Divers' ,
+                     'D' : 'Exposition - Foires - Conferences - Congres - Seminaires ',
+                     'E' : 'Visites commentes - Manifestations ',
+                     'F' : 'Festival' ,
+                     'G' : 'Expositon - Foires' ,
+                     'H' : 'Sport' ,
+                     'I' : 'Musee' ,
+                     'J' : 'Manifestation' ,
+                     'K' : 'Gastronomie' ,
+                     'O' : 'Divers' , 
+                     }  
+            for option in cats :
+                text += "<option value='" + option
+                text += "'"
+                if event[ 'fk_category' ] == option :
+                    text += " selected "
+                text += ">" + cats[ option ] + "</option>"
+            text += "</select>"
+            text += "</td>\n"
+            text += "</tr>\n"
+    
+    text        += "<tr><td colspan='5'><input type='submit' value='injecter cet evenement dans les sites events'></td></tr>\n"
+    text        += "</table>\n"
+    text        += "</form>\n"
+    text        += "<br/><br/>\n"
+text            += '</body>\n'
+msg              = MIMEText( text, 'html', 'UTF-8')
+now              = datetime.datetime.today()
+msg['Subject']   = 'Aspiration myswitzerland.com ' + str( now )
+msg['From']      = "info@t-servi.com"
+msg['Reply-to']  = "info@t-servi.com"
+msg['To']        = "aeschlimann.charles@gmail.com"
+#print( msg )
+s                = smtplib.SMTP( "ca-dev.com" )
+#s.set_debuglevel( 1 )
+s.ehlo()
+s.login( user, password )
+s.sendmail( "<info@t-servi.com>" , "<aeschlimann.charles@gmail.com>" ,msg.as_string() )
 s.close()
-"""
-    port = 25
-    sock_req = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP)
-    sock_req.connect(( "127.0.0.1" , port) ) 
-    #print(msg.as_string())
-    #s = smtplib.SMTP()
-    #s.sendmail( 'admin@ca-dev.com', 'admin@ca-dev.com' , msg.as_string())
-    #s.quit()
-    sock_req.send( bytes( "HELO <admin@ca-dev.com>\r\n" , "latin-1") )
-    rep = sock_req.recv(1024)
-    print(rep)
-    sock_req.send( bytes( "MAIL FROM: <admin@ca-dev.com>\r\n" , "latin-1") )
-    rep = sock_req.recv(1024)
-    print(rep)
-    sock_req.send( bytes( "RCPT TO: <admin@ca-dev.com>\r\n" , "latin-1") )
-    rep = sock_req.recv(1024)
-    print(rep)
-    sock_req.send( bytes( "DATA\r\n" , "latin-1") )
-    rep = sock_req.recv(1024)
-    print(rep)
-    sock_req.send( bytes( "from: <admin@ca-dev.com>\r\nto: <admin@ca-dev.com>\r\nsubject: nouvel event\r\n" + msg.as_string() , "latin-1") )
-    rep = sock_req.recv(1024)
-    print(rep)
-    #print( sock_req.recv( 1024 ) )
-    sock_req.send( bytes( "QUIT\r\n" , "latin-1") )
-    rep = sock_req.recv(1024)
-    print(rep)
-    sock_req.close( )
-"""
 print( "The end! ")
